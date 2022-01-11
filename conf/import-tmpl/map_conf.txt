@@ -1,0 +1,4 @@
+userid: ragnarok
+passwd: ragnarok
+char_ip: localhost
+map_ip: localhost

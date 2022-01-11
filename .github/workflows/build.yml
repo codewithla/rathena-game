@@ -1,0 +1,81 @@
+name: build rA
+
+on: [pull_request]
+
+env:
+  DB_ROOT: 'root'
+  DB_ROOTPW: 'root'
+  DB_HOST: '127.0.0.1'
+  DB_NAME: 'ragnarok'
+  DB_USER: 'ragnarok'
+  DB_PASS: 'ragnarok'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Update & Install packages
+        run: sudo apt install zlib1g-dev libpcre3-dev
+        
+      - name: Force Setup of G++-7
+        run: |
+          sudo apt install g++-7 gcc-7
+
+      - name: Start MySQL
+        run: sudo systemctl start mysql.service
+
+      - name: Setup Database
+        run: mysql -u $DB_ROOT -p$DB_ROOTPW -e "CREATE DATABASE $DB_NAME;"
+
+      - name: Create MySQL User
+        run: |
+          mysql -u $DB_ROOT -p$DB_ROOTPW -e "CREATE USER '$DB_USER'@'$DB_HOST' IDENTIFIED BY '$DB_PASS';"
+          mysql -u $DB_ROOT -p$DB_ROOTPW -e "GRANT SELECT,INSERT,UPDATE,DELETE,CREATE ON $DB_NAME.* TO '$DB_USER'@'$DB_HOST';"
+
+      - name: Setup Tables
+        run: |
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/main.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/logs.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/item_cash_db.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/item_cash_db2.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/item_db.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/item_db_usable.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/item_db_equip.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/item_db_etc.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/item_db2.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/item_db_re.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/item_db_re_usable.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/item_db_re_equip.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/item_db_re_etc.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/item_db2_re.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/mob_db.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/mob_db2.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/mob_db_re.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/mob_db2_re.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/mob_skill_db.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/mob_skill_db2.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/mob_skill_db_re.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/mob_skill_db2_re.sql
+          mysql -u $DB_ROOT -p$DB_ROOTPW $DB_NAME < sql-files/roulette_default_data.sql
+          
+      - name: Command - configure
+        env:
+            CONFIGURE_FLAGS: 'CC=gcc-7 CXX=g++-7 --enable-packetver=20200401 --enable-prere=yes --enable-vip=yes --enable-buildbot=yes'
+        run: ./configure $CONFIGURE_FLAGS
+
+      - name: Command - make clean
+        run: make clean
+
+      - name: Command - make server
+        run: make server
+
+      - name: Run Once - login-server
+        run: ./login-server --run-once
+
+      - name: Run Once - char-server
+        run: ./char-server --run-once
+
+      - name: Run Once - map-server
+        run: ./map-server --run-once
