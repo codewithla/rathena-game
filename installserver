@@ -1,5 +1,6 @@
 #!/bin/sh
 chmod +x configure;
+chmod +x db/backup/backups.sh;
 ./configure CC=gcc-7 CXX=g++-7 --enable-packetver=20200401 --enable-prere=yes --enable-vip=yes --enable-buildbot=yes;
 make clean;
 make server;
