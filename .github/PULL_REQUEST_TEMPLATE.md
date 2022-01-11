@@ -11,6 +11,6 @@ Yes. There should be an issue for any fixes
 
 <!-- Describe how this pull request will resolve the issue(s) listed above. -->
 
-* **Testing Evidence*: 
+* **Testing Evidence**: 
 
 <!-- You tested everything and are proud of your code. Let's show it off! -->
